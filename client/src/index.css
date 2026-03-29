@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  :root {
+    --af-canvas-rgb: 255 253 235;
+    --af-canvas-muted-rgb: 232 219 179;
+    --af-canvas-grad-mid-rgb: 248 244 228;
+    --af-canvas-grad-end-rgb: 235 228 200;
+    --af-card-rgb: 255 255 255;
+    --af-line-rgb: 229 231 235;
+    --af-ink-rgb: 17 24 39;
+    --af-ink-muted-rgb: 107 114 128;
+    --af-ink-faint-rgb: 156 163 175;
+  }
+
+  html.dark {
+    --af-canvas-rgb: 18 20 28;
+    --af-canvas-muted-rgb: 35 39 54;
+    --af-canvas-grad-mid-rgb: 24 27 38;
+    --af-canvas-grad-end-rgb: 12 14 20;
+    --af-card-rgb: 26 29 40;
+    --af-line-rgb: 55 62 85;
+    --af-ink-rgb: 243 244 246;
+    --af-ink-muted-rgb: 161 168 184;
+    --af-ink-faint-rgb: 123 129 148;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    @apply min-h-screen bg-canvas font-sans text-ink antialiased;
+    background-image: linear-gradient(
+      165deg,
+      rgb(var(--af-canvas-rgb)) 0%,
+      rgb(var(--af-canvas-rgb)) 50%,
+      rgb(var(--af-canvas-grad-mid-rgb)) 82%,
+      rgb(var(--af-canvas-grad-end-rgb)) 100%
+    );
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold tracking-tight text-ink;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border border-line bg-card text-ink shadow-card dark:shadow-card-dark;
+  }
+
+  .surface-card-hover {
+    @apply surface-card transition-all duration-250 ease-out;
+  }
+
+  .surface-card-hover:hover {
+    @apply -translate-y-0.5 border-secondary/60 shadow-card-lg dark:border-primary/40 dark:shadow-card-lg-dark;
+  }
+
+  .nav-surface {
+    @apply sticky top-0 z-40 border-b border-line bg-canvas/95 shadow-nav dark:shadow-nav-dark;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-250;
+    @apply hover:bg-primary-dark active:bg-primary-darker;
+  }
+
+  .btn-accent {
+    @apply rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition duration-250;
+    @apply hover:bg-accent-hover;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm text-ink shadow-sm transition duration-200;
+    @apply placeholder:text-ink-faint focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25;
+  }
+}
