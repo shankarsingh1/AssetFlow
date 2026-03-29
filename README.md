@@ -1,101 +1,344 @@
-# AssetFlow
+<div align="center">
 
-AssetFlow is a full-stack **digital asset marketplace** with a **credit-based economy**, **JWT authentication** (access + refresh cookies), optional **Cloudinary** uploads, **BullMQ** workers for **Replicate**-powered AI trading cards, and a **React + Vite** client with **Zustand** and **Tailwind**.
+```
+ █████╗ ███████╗███████╗███████╗████████╗███████╗██╗      ██████╗ ██╗    ██╗
+██╔══██╗██╔════╝██╔════╝██╔════╝╚══██╔══╝██╔════╝██║     ██╔═══██╗██║    ██║
+███████║███████╗███████╗█████╗     ██║   █████╗  ██║     ██║   ██║██║ █╗ ██║
+██╔══██║╚════██║╚════██║██╔══╝     ██║   ██╔══╝  ██║     ██║   ██║██║███╗██║
+██║  ██║███████║███████║███████╗   ██║   ██║     ███████╗╚██████╔╝╚███╔███╔╝
+╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝   ╚═╝   ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
+```
 
-## Local setup
+**A Web2 Digital Asset Marketplace — Trade Art & Music with Credits, Not Crypto.**
 
-1. **Prerequisites**
-   - Node.js 18+
-   - MongoDB (Atlas URI or local)
-   - Redis (for BullMQ — default `redis://localhost:6379`)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-asset--flow--lyart.vercel.app-6C3FC5?style=for-the-badge&logo=vercel)](https://asset-flow-lyart.vercel.app/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Node](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 
-2. **Clone / open the repo** and copy environment files:
+</div>
 
-   ```bash
-   cp .env.example .env
-   ```
+---
 
-   Fill in secrets (see table below). For the client, optional: create `client/.env` with `VITE_API_URL=` empty when using the Vite dev proxy, or set `VITE_API_URL=http://localhost:5000` if calling the API directly.
+## 🌐 Live Demo
 
-3. **Install dependencies**
+> **[https://asset-flow-lyart.vercel.app/](https://asset-flow-lyart.vercel.app/)**
 
-   ```bash
-   cd server && npm install
-   cd ../client && npm install
-   ```
+---
 
-4. **Run Redis** (Docker example):
+## 📖 What is AssetFlow?
 
-   ```bash
-   docker run -d -p 6379:6379 redis:7-alpine
-   ```
+AssetFlow is a full-stack digital asset marketplace where creators sell digital art and music, and collectors buy them — all using a **free credit-based economy**. No crypto wallets. No real money. No friction.
 
-5. **Start the API** (from `server/`):
+Every user gets **100 welcome credits** on signup and **50 free credits every 24 hours**. Sellers list assets at a credit price. Buyers purchase them. Ownership transfers instantly and atomically. Every transaction is logged as an immutable audit record.
 
-   ```bash
-   npm run dev
-   ```
+As a bonus, any uploaded image can be transformed into a **fantasy trading card** using AI — for free, with no API key required.
 
-6. **Start the client** (from `client/`):
+---
 
-   ```bash
-   npm run dev
-   ```
+## ✨ Features
 
-   Open `http://localhost:5173`. API requests to `/api/*` are proxied to `http://localhost:5000` per `vite.config.js`.
+### 👤 Auth & Users
+- JWT-based authentication with **access tokens (15 min)** + **refresh tokens (7 days)**
+- Refresh tokens stored in **httpOnly cookies** — never exposed to JavaScript
+- Silent token refresh via **Axios interceptor** — users never get logged out mid-session
+- Login rate-limited to **5 attempts per 15 minutes** per IP (brute-force protection)
+- Public user profiles showing created and owned assets
 
-## Environment variables
+### ⚡ Credit Economy
+- **100 credits** gifted on registration
+- **50 free credits** claimable every 24 hours — server-validated, no double-claiming
+- Platform takes a **5% fee** on every sale; seller receives 95%
+- Credit balance **can never go negative** — purchases blocked if insufficient funds
+- Full credit earn/spend history available per user
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | HTTP port for Express (default `5000`). |
-| `MONGODB_URI` | MongoDB connection string. |
-| `JWT_ACCESS_SECRET` | Secret for short-lived access JWTs (~15m). |
-| `JWT_REFRESH_SECRET` | Secret for 7-day refresh JWTs (sent as httpOnly cookie). |
-| `DAILY_CREDITS` | Credits added on successful daily claim (default `50`). |
-| `PLATFORM_FEE_PERCENT` | Documented platform fee percent (purchase logic uses **5%** floor as specified). |
-| `CLOUDINARY_*` | Cloud name, API key, and secret for media + AI card uploads. |
-| `REPLICATE_API_TOKEN` | Token for [Replicate](https://replicate.com) SDXL card generation. |
-| `REDIS_URL` | Redis connection URL for BullMQ. |
-| `CLIENT_URL` | Allowed CORS origin (e.g. `http://localhost:5173`). |
-| `NODE_ENV` | `development` or `production` (affects cookie `Secure`, logging). |
+### 🛒 Marketplace
+- Browse all active listings — filter by category (art / music / collectible), sort by price or date
+- Create a listing with a custom credit price (minimum 5 credits)
+- Buy any listing — triggers a **MongoDB atomic transaction** covering:
+  - Credit deduction from buyer
+  - Credit crediting to seller (95%) and platform (5%)
+  - Asset ownership transfer
+  - Listing marked as sold
+  - Immutable transaction log created
+- Cancel your own listing at any time
+- Full **ownership history** visible on every asset — see every previous owner
 
-## Architecture notes
+### 🤖 AI Card Generation
+- Upload any image → click "Generate Card"
+- Server builds a fantasy TCG-style prompt using the asset title
+- **Pollinations.ai** returns a unique 512×768 trading card image — free, instant, no API key
+- Up to **3 regenerations** per asset
+- Card URL saved directly — renders in the browser immediately
 
-- **Refresh tokens** are stored as a **bcrypt hash of SHA-256** of the JWT (avoids bcrypt’s 72-byte limit while staying “hashed” in DB).
-- **Purchases** use a MongoDB **multi-document transaction** (`session.withTransaction`); credits, asset ownership, listing status, and an audit **Transaction** record update atomically.
-- **Listings** include a denormalized **`category`** field (copied from the asset) to support the compound index `(status, category)` and efficient marketplace filters.
-- The **card generation worker** runs in the same process as the API (`server.js`). For heavy scale, run workers in a separate deployment consuming the same Redis queue.
+### 📁 Asset Management
+- Upload digital art (PNG, JPG, GIF, WebP — max 20MB) or music (MP3, WAV — max 50MB)
+- Files stored on **Cloudinary** with CDN delivery
+- Add title, description, category, and tags
+- View all assets you own and all assets you originally created
 
-## API routes
+---
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/auth/register` | — | Register; sets refresh cookie + returns access token. |
-| POST | `/api/auth/login` | — | Login; rate-limited **5 / 15 min / IP**. |
-| POST | `/api/auth/refresh` | Cookie | New access token. |
-| POST | `/api/auth/logout` | — | Clears cookie; invalidates stored refresh hash. |
-| GET | `/api/users/me` | JWT | Current user profile. |
-| PATCH | `/api/users/me` | JWT | Update bio / avatar URL. |
-| GET | `/api/users/profile/:username` | — | Public profile + created/owned assets. |
-| GET | `/api/assets/mine` | JWT | Current user’s owned assets. |
-| POST | `/api/assets` | JWT | Multipart upload; creates asset. |
-| GET | `/api/assets/:id` | — | Asset detail. |
-| PATCH | `/api/assets/:id` | JWT | Update metadata (owner). |
-| DELETE | `/api/assets/:id` | JWT | Delete asset (not if listed). |
-| GET | `/api/assets/:id/history` | — | Ownership timeline (mint + sales). |
-| POST | `/api/assets/:id/generate-card` | JWT | Enqueue AI card job (max 3 / asset). |
-| GET | `/api/listings` | — | List active listings; `search`, `category`, `sort`, `page`, `limit`. |
-| GET | `/api/listings/:id` | — | Single listing (populated asset + seller). |
-| POST | `/api/listings` | JWT | Create listing (owner only). |
-| POST | `/api/listings/:id/buy` | JWT | Purchase (transactional). |
-| POST | `/api/listings/:id/cancel` | JWT | Seller cancels listing. |
-| POST | `/api/credits/claim` | JWT | Daily credit claim (UTC midnight boundary). |
-| GET | `/api/credits/balance` | JWT | Balance + last claim time. |
-| GET | `/api/credits/history` | JWT | Aggregate totals + pointer to transactions. |
-| GET | `/api/transactions` | JWT | Paginated buy/sell history for user. |
-| GET | `/api/health` | — | Liveness check. |
+## 🏗️ Tech Stack
 
-## License
+| Layer | Technology | Purpose |
+|---|---|---|
+| Frontend | React 18 + Vite | UI, routing, component architecture |
+| State | Zustand | Global auth state, credit balance |
+| Styling | Tailwind CSS | Utility-first responsive design |
+| HTTP Client | Axios | API calls + silent token refresh interceptor |
+| Backend | Node.js + Express.js | REST API server |
+| Database | MongoDB + Mongoose | Data persistence, atomic transactions |
+| Auth | JWT (HS256) | Stateless authentication |
+| File Storage | Cloudinary | Image and audio CDN hosting |
+| AI Cards | Pollinations.ai | Free image generation — no API key needed |
+| Security | Helmet, CORS, express-rate-limit | Headers, origin control, brute-force protection |
+| Validation | express-validator | Server-side input validation on all routes |
 
-Use and modify for your product as needed.
+---
+
+## 📁 Project Structure
+
+```
+assetflow/
+├── client/                        # React + Vite frontend
+│   └── src/
+│       ├── api/                   # Axios API functions per resource
+│       ├── components/            # Reusable UI components
+│       │   ├── Navbar.jsx
+│       │   ├── CreditBadge.jsx
+│       │   ├── AssetCard.jsx
+│       │   ├── AICardViewer.jsx
+│       │   ├── BuyModal.jsx
+│       │   ├── ClaimCreditsButton.jsx
+│       │   └── OwnershipHistory.jsx
+│       ├── pages/                 # Route-level page components
+│       │   ├── Home.jsx
+│       │   ├── Marketplace.jsx
+│       │   ├── ListingDetail.jsx
+│       │   ├── Upload.jsx
+│       │   ├── AssetDetail.jsx
+│       │   ├── Dashboard.jsx
+│       │   ├── Profile.jsx
+│       │   ├── Transactions.jsx
+│       │   ├── Login.jsx
+│       │   └── Register.jsx
+│       └── store/                 # Zustand stores
+│           ├── authStore.js
+│           └── creditStore.js
+│
+└── server/                        # Node.js + Express backend
+    ├── config/
+    │   ├── db.js                  # MongoDB connection
+    │   └── cloudinary.js          # Cloudinary SDK setup
+    ├── models/
+    │   ├── User.js
+    │   ├── Asset.js
+    │   ├── Listing.js
+    │   └── Transaction.js
+    ├── middleware/
+    │   ├── authenticateJWT.js     # Token verification
+    │   ├── errorHandler.js        # Global error handler
+    │   └── upload.js              # Multer file validation
+    ├── routes/                    # Express route definitions
+    ├── controllers/               # Business logic handlers
+    ├── services/
+    │   ├── creditService.js       # Credit operations
+    │   ├── cloudinaryService.js   # File upload/delete
+    │   └── aiService.js           # Pollinations card generation
+    ├── app.js
+    └── server.js
+```
+
+---
+
+## 🗄️ Database Schema Overview
+
+### User
+```
+credits_balance   Number   (default: 100)
+last_claim_at     Date     (null until first daily claim)
+total_earned      Number   (lifetime credits earned from sales)
+total_spent       Number   (lifetime credits spent on purchases)
+refresh_token     String   (hashed — never stored plaintext)
+```
+
+### Asset
+```
+owner_id          ObjectId → User   (current owner — changes on purchase)
+creator_id        ObjectId → User   (original creator — never changes)
+status            'unlisted' | 'listed' | 'sold'
+ai_card_url       String   (null until AI card generated)
+ai_card_generation_count  Number (max 3)
+```
+
+### Listing
+```
+asset_id          ObjectId → Asset
+seller_id         ObjectId → User
+price_credits     Number (min: 5)
+status            'active' | 'sold' | 'cancelled'
+```
+
+### Transaction (immutable audit log)
+```
+buyer_id / seller_id / asset_id / listing_id
+price_credits     Number
+fee_credits       Number   (5% platform cut)
+created_at        Date     (never updated)
+```
+
+---
+
+## 🔌 API Reference
+
+### Auth — `/api/auth`
+| Method | Path | Description |
+|---|---|---|
+| POST | `/register` | Register, receive JWT, get 100 welcome credits |
+| POST | `/login` | Login, get access token + refresh cookie |
+| POST | `/logout` | Clear refresh token |
+| POST | `/refresh` | Silently issue new access token |
+
+### Credits — `/api/credits`
+| Method | Path | Description |
+|---|---|---|
+| POST | `/claim` | Claim 50 daily credits (once per 24h) |
+| GET | `/history` | Credit earn/spend history |
+
+### Assets — `/api/assets`
+| Method | Path | Description |
+|---|---|---|
+| POST | `/` | Upload new asset |
+| GET | `/:id` | Get asset detail |
+| POST | `/:id/generate-card` | Generate AI trading card |
+| GET | `/me/owned` | All assets you own |
+| GET | `/me/created` | All assets you created |
+
+### Listings — `/api/listings`
+| Method | Path | Description |
+|---|---|---|
+| GET | `/` | Browse marketplace (paginated, filtered) |
+| POST | `/` | Create listing |
+| GET | `/:id` | Single listing detail |
+| DELETE | `/:id` | Cancel listing |
+| POST | `/:id/buy` | Purchase listing (atomic transaction) |
+
+### Transactions — `/api/transactions`
+| Method | Path | Description |
+|---|---|---|
+| GET | `/me` | Your buy/sell history |
+| GET | `/:assetId/history` | Ownership history for an asset |
+
+---
+
+## ⚙️ Local Setup
+
+### Prerequisites
+- Node.js v18+
+- MongoDB Atlas account (free tier)
+- Cloudinary account (free tier)
+
+### 1. Clone the repo
+```bash
+git clone https://github.com/yourusername/assetflow.git
+cd assetflow
+```
+
+### 2. Set up environment variables
+```bash
+cp .env.example .env
+# Open .env and fill in your values
+```
+
+```env
+PORT=5000
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/assetflow
+JWT_ACCESS_SECRET=generate_with_crypto_randomBytes_32
+JWT_REFRESH_SECRET=generate_a_different_one_here
+DAILY_CREDITS=50
+PLATFORM_FEE_PERCENT=5
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CLIENT_URL=http://localhost:5173
+NODE_ENV=development
+# No Redis, no Replicate — AI generation uses Pollinations.ai (free, no key needed)
+```
+
+Generate secure JWT secrets:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Run twice — use one for ACCESS_SECRET, one for REFRESH_SECRET
+```
+
+### 3. Install dependencies
+```bash
+# Backend
+cd server && npm install
+
+# Frontend
+cd ../client && npm install
+```
+
+### 4. Run both servers
+```bash
+# Terminal 1 — API server
+cd server
+npm run dev
+# → Running on http://localhost:5000
+
+# Terminal 2 — React app
+cd client
+npm run dev
+# → Running on http://localhost:5173
+```
+
+> **MongoDB Atlas tip:** Go to Network Access → Add IP Address → `0.0.0.0/0` to allow connections from your local machine.
+
+---
+
+## 🔐 Security Decisions
+
+| Decision | Why |
+|---|---|
+| httpOnly refresh token cookie | Prevents XSS from stealing the refresh token |
+| Short-lived access tokens (15 min) | Limits blast radius if an access token leaks |
+| Hashed refresh token in DB | If DB is leaked, tokens can't be replayed |
+| MongoDB session for purchases | Prevents partial updates — all-or-nothing credit transfer |
+| Server-side price validation | Buyer cannot manipulate the purchase price from the client |
+| bcrypt with 12 salt rounds | Industry-standard password hashing |
+| express-rate-limit on login | Prevents brute-force credential attacks |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] JWT auth with refresh token rotation
+- [x] Daily free credit claim
+- [x] Asset upload to Cloudinary
+- [x] AI card generation (Pollinations.ai)
+- [x] Marketplace listing + purchase flow
+- [x] Atomic ownership transfer (MongoDB transactions)
+- [x] Ownership history per asset
+- [ ] TradingView-style price history graphs
+- [ ] Auction system with credit bidding
+- [ ] Creator royalties on secondary sales (2.5%)
+- [ ] Google OAuth login
+- [ ] Collections & series grouping
+- [ ] Trending algorithm
+
+---
+
+## 👨‍💻 Author
+
+Built by **Shank** as a full-stack portfolio project demonstrating MERN stack, REST API design, JWT authentication, transactional database operations, and AI integration.
+
+[![Deploy](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://asset-flow-lyart.vercel.app/)
+
+---
+
+<div align="center">
+  <sub>AssetFlow — Built for portfolio & internship excellence</sub>
+</div>
