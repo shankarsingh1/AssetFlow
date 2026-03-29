@@ -5,14 +5,29 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken as verifyJwtRefre
 
 const COOKIE_NAME = 'refreshToken';
 
+/**
+ * Production: SPA (e.g. Vercel) and API (e.g. Render) are different sites — the browser
+ * only sends cookies on cross-origin XHR if SameSite=None and Secure=true.
+ * Strict/Lax would block refresh cookies, breaking login/session after deploy.
+ */
 function cookieOptions() {
   const isProd = process.env.NODE_ENV === 'production';
   return {
     httpOnly: true,
     secure: isProd,
-    sameSite: 'strict',
+    sameSite: isProd ? 'none' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
+  };
+}
+
+function clearCookieOptions() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    path: '/',
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
   };
 }
 
@@ -133,7 +148,7 @@ export async function refresh(req, res, next) {
 export async function logout(req, res, next) {
   try {
     const refreshToken = req.cookies?.[COOKIE_NAME];
-    res.clearCookie(COOKIE_NAME, { path: '/', sameSite: 'strict' });
+    res.clearCookie(COOKIE_NAME, clearCookieOptions());
 
     if (refreshToken) {
       try {

@@ -12,10 +12,14 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
+/** Required behind Render / Vercel / other proxies for correct secure cookies & IPs */
+app.set('trust proxy', 1);
+
 app.use(helmet());
+const clientOrigin = (process.env.CLIENT_URL || 'http://localhost:5173').replace(/\/$/, '');
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: clientOrigin,
     credentials: true,
   })
 );
